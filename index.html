@@ -51,7 +51,7 @@
   .seg.dim{opacity:.28}
   .seg.active{filter:brightness(1.12) drop-shadow(0 4px 10px rgba(60,40,20,.25))}
   .seg-label{font-family:'Work Sans',sans-serif;font-weight:500;font-size:11px;fill:#fff;pointer-events:none;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.25)}
-  .fam-label{font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;fill:var(--muted);pointer-events:none}
+  .fam-label{font-family:'Spline Sans Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;fill:var(--muted);pointer-events:none;dominant-baseline:central}
   .hub{font-family:'Fraunces',serif;text-anchor:middle;fill:var(--ink)}
   .hub-main{font-size:19px;font-weight:600}
   .hub-sub{font-family:'Spline Sans Mono',monospace;font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;fill:var(--muted)}
@@ -315,7 +315,7 @@ let MODE='bake';
 /* ---------- BUILD WHEEL ---------- */
 const svg = document.getElementById('wheel');
 const SVGNS = "http://www.w3.org/2000/svg";
-const CX=300, CY=300, R_OUT=290, R_IN=120, R_FAM=300;
+const CX=300, CY=300, R_OUT=248, R_IN=104, R_FAM=262;
 const TWO_PI = Math.PI*2;
 
 function polar(cx,cy,r,a){return [cx+r*Math.cos(a), cy+r*Math.sin(a)];}
@@ -388,18 +388,34 @@ function buildWheel(ds){
       path.addEventListener('click',()=>select(flav.n));
       angle=a1;
     });
-    // family label outside
+    // family label — curved text following the ring, sitting in the outer margin
     const famMid=(famStart+angle)/2;
-    let [fx,fy]=polar(CX,CY,R_FAM+8,famMid);
-    let fdeg=famMid*180/Math.PI;
-    let frot=fdeg; if(fdeg>90&&fdeg<270) frot=fdeg+180;
+    const famSpan=angle-famStart;
+    // build an arc path for the text to follow, concentric with the wheel
+    const labelR=R_FAM;
+    // text should read left-to-right along the top, flipped on the bottom half
+    const bottom = (Math.sin(famMid) > 0); // famMid in lower half of circle
+    let aStart, aEnd;
+    if(bottom){ aStart=famMid+famSpan/2; aEnd=famMid-famSpan/2; }
+    else      { aStart=famMid-famSpan/2; aEnd=famMid+famSpan/2; }
+    const [ax0,ay0]=polar(CX,CY,labelR,aStart);
+    const [ax1,ay1]=polar(CX,CY,labelR,aEnd);
+    const sweep = bottom?0:1;
+    const arcId='famarc-'+fam.name.replace(/[^a-z0-9]/gi,'');
+    const apath=document.createElementNS(SVGNS,'path');
+    apath.setAttribute('id',arcId);
+    apath.setAttribute('d',`M${ax0} ${ay0} A${labelR} ${labelR} 0 0 ${sweep} ${ax1} ${ay1}`);
+    apath.setAttribute('fill','none');
+    svg.appendChild(apath);
     const ft=document.createElementNS(SVGNS,'text');
-    ft.setAttribute('x',fx);ft.setAttribute('y',fy);
     ft.setAttribute('class','fam-label');
-    ft.setAttribute('text-anchor','middle');
-    ft.setAttribute('dominant-baseline','middle');
-    ft.setAttribute('transform',`rotate(${frot} ${fx} ${fy})`);
-    ft.textContent=fam.name;
+    const tp=document.createElementNS(SVGNS,'textPath');
+    tp.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href','#'+arcId);
+    tp.setAttribute('href','#'+arcId);
+    tp.setAttribute('startOffset','50%');
+    tp.setAttribute('text-anchor','middle');
+    tp.textContent=fam.name;
+    ft.appendChild(tp);
     svg.appendChild(ft);
   });
 
