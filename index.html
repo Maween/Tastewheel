@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Flavour Wheel — Baking Pairings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Spline+Sans+Mono:wght@400;500&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf6ef;
+    --ink:#241c16;
+    --muted:#7a6e60;
+    --line:#e3d9c8;
+    --card:#fffdf9;
+    --classic:#7a8b5a;
+    --interesting:#c98a3c;
+    --bold:#b5483f;
+    --shadow:0 1px 2px rgba(60,40,20,.06),0 8px 24px rgba(60,40,20,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Work Sans',sans-serif;
+    font-weight:300;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 50% 0%,rgba(201,138,60,.05),transparent 60%);
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  header{padding:56px 0 30px;text-align:center}
+  .kicker{font-family:'Spline Sans Mono',monospace;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--interesting);margin-bottom:14px}
+  h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.02;letter-spacing:-.02em}
+  h1 em{font-style:italic;color:var(--bold)}
+  .sub{max-width:560px;margin:18px auto 0;color:var(--muted);font-size:1.02rem}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:40px;align-items:start;padding:30px 0 80px}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+  /* Wheel */
+  .wheel-stage{position:sticky;top:24px}
+  @media(max-width:900px){.wheel-stage{position:static}}
+  .wheel-box{aspect-ratio:1;width:100%;position:relative}
+  svg{width:100%;height:100%;overflow:visible}
+  .seg{cursor:pointer;transition:transform .25s cubic-bezier(.2,.8,.3,1),filter .25s,opacity .25s;transform-origin:center;transform-box:fill-box}
+  .seg:hover{filter:brightness(1.07)}
+  .seg.dim{opacity:.28}
+  .seg.active{filter:brightness(1.12) drop-shadow(0 4px 10px rgba(60,40,20,.25))}
+  .seg-label{font-family:'Work Sans',sans-serif;font-weight:500;font-size:11px;fill:#fff;pointer-events:none;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+  .fam-label{font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;fill:var(--muted);pointer-events:none}
+  .hub{font-family:'Fraunces',serif;text-anchor:middle;fill:var(--ink)}
+  .hub-main{font-size:19px;font-weight:600}
+  .hub-sub{font-family:'Spline Sans Mono',monospace;font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;fill:var(--muted)}
+
+  /* Panel */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+  .panel-head{padding:26px 26px 20px;border-bottom:1px solid var(--line);position:relative}
+  .panel-head .chip{display:inline-block;font-family:'Spline Sans Mono',monospace;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:4px 10px;border:1px solid var(--line);border-radius:99px;margin-bottom:12px}
+  .panel-head h2{font-family:'Fraunces',serif;font-weight:500;font-size:2rem;line-height:1.05}
+  .panel-head .note{color:var(--muted);font-size:.9rem;margin-top:8px}
+  .legend{display:flex;gap:16px;padding:14px 26px;font-family:'Spline Sans Mono',monospace;font-size:.66rem;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .pairings{padding:8px 0 14px;max-height:540px;overflow-y:auto}
+  .grp{padding:14px 26px 4px}
+  .grp-title{font-family:'Spline Sans Mono',monospace;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .pair{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #f1ebe0}
+  .pair:last-child{border-bottom:none}
+  .pair .name{font-family:'Fraunces',serif;font-size:1.06rem;font-weight:500;min-width:120px;flex-shrink:0}
+  .pair .why{font-size:.86rem;color:var(--muted);line-height:1.45}
+  .empty{padding:50px 26px;text-align:center;color:var(--muted)}
+  .empty .big{font-family:'Fraunces',serif;font-style:italic;font-size:1.3rem;color:var(--ink);margin-bottom:8px}
+
+  /* Tabs */
+  .tabs{display:flex;justify-content:center;gap:8px;margin:8px 0 4px}
+  .tab{font-family:'Spline Sans Mono',monospace;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;padding:11px 22px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:99px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+  .tab:hover{color:var(--ink);border-color:var(--muted)}
+  .tab.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .tab .ico{font-size:1rem}
+
+  footer{text-align:center;padding:30px 0 60px;color:var(--muted);font-family:'Spline Sans Mono',monospace;font-size:.72rem;letter-spacing:.08em}
+  footer a{color:var(--interesting);text-decoration:none}
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker" id="kicker">Aroma &amp; Tradition · For Bakers</div>
+    <h1>The <em id="titleWord">Flavour</em> Wheel</h1>
+    <p class="sub" id="sub">Click any flavour to reveal what pairs with it — the classics, the clever, and the boldly unexpected. Grounded in shared aroma compounds and the kitchen canon.</p>
+    <div class="tabs">
+      <button class="tab active" id="tab-bake" onclick="switchMode('bake')"><span class="ico">🧁</span> Baking &amp; Sweet</button>
+      <button class="tab" id="tab-food" onclick="switchMode('food')"><span class="ico">🍳</span> Savoury &amp; Cooking</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="wheel-stage">
+      <div class="wheel-box"><svg id="wheel" viewBox="0 0 600 600" aria-label="Interactive flavour wheel"></svg></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="chip" id="famChip">Select a flavour</span>
+        <h2 id="title">Pick from the wheel</h2>
+        <p class="note" id="note">Each segment is a baking-friendly flavour, grouped by aroma family around the ring.</p>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--classic)"></i>Classic</span>
+        <span><i class="dot" style="background:var(--interesting)"></i>Interesting</span>
+        <span><i class="dot" style="background:var(--bold)"></i>Bold &amp; unexpected</span>
+      </div>
+      <div class="pairings" id="pairings">
+        <div class="empty">
+          <div class="big">Where to begin?</div>
+          <div>Try Raspberry, Brown&nbsp;Butter, or Cardamom.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Built for recipe experiments · <span id="count"></span> flavours &amp; counting</footer>
+</div>
+
+<script>
+/* ---------- DATA ----------
+   families ordered around the wheel. Each flavour:
+   c = classic pairings, i = interesting, b = bold/unexpected
+   Each pairing: [name, reason]
+*/
+const BAKE_FAMILIES = [
+  {name:"Berry",      hue:"#c0455f"},
+  {name:"Citrus",     hue:"#e0962f"},
+  {name:"Orchard",    hue:"#cf9d3e"},
+  {name:"Tropical",   hue:"#d8a93a"},
+  {name:"Floral",     hue:"#c98aa8"},
+  {name:"Herb & Green",hue:"#8aa05a"},
+  {name:"Spice",      hue:"#b06a3a"},
+  {name:"Roasted & Nutty",hue:"#9a6a44"},
+  {name:"Dairy & Rich",hue:"#c9a26a"},
+  {name:"Chocolate & Coffee",hue:"#6f4a3a"}
+];
+
+const BAKE_FLAVOURS = [
+  // BERRY
+  {n:"Raspberry",f:"Berry",c:[["Dark chocolate","A canonical pairing — bright acidity cuts cocoa's richness."],["Vanilla","Rounds raspberry's sharp edge into something creamy and complete."],["Almond","Frangipane + raspberry is a patisserie staple; nutty warmth vs tart fruit."]],i:[["Rose","They share floral ketone aromas — rose amplifies raspberry's perfume."],["Lychee","Famous in the Ispahan; overlapping floral-fruity esters."],["Basil","Green-peppery basil lifts raspberry into a savoury-sweet jam."]],b:[["Beetroot","Earthy-sweet beet echoes raspberry's deep red notes in cakes."],["Black pepper","Piperine heat sharpens the berry; try in a shortbread."],["Smoked salt","Phenolic smoke against tart fruit — striking on a tart."]]},
+  {n:"Strawberry",f:"Berry",c:[["Cream","The shortcake axiom — fat carries strawberry's volatile esters."],["Vanilla","Softens and sweetens; mutual custard-friendliness."],["Rhubarb","Tart-sweet balance, a spring classic."]],i:[["Balsamic","Acetic depth intensifies perceived sweetness."],["Basil","Shared green, slightly anise aromatics."],["Black pepper","Heightens aroma without adding sweetness."]],b:[["Tomato","Both are sweet-acidic; a savoury jam works oddly well."],["Miso","Umami-salt deepens a strawberry caramel."],["Tarragon","Anise note bridges into the fruit unexpectedly."]]},
+  {n:"Blueberry",f:"Berry",c:[["Lemon","Classic muffin pairing; citrus brightens muted berry."],["Cinnamon","Warm spice for cobblers and crumbles."],["Maple","Caramel sweetness complements the jammy fruit."]],i:[["Lavender","Shared floral-terpene notes; gentle and aromatic."],["Cardamom","Eucalyptus lift against deep berry."],["Goat cheese","Tangy-creamy foil in a galette."]],b:[["Black tea","Tannic, smoky bergamot edges (Earl Grey loaf)."],["Rosemary","Pine-resin herb against sweet fruit."],["Sweetcorn","Both have a buttery, summery quality."]]},
+  {n:"Blackberry",f:"Berry",c:[["Apple","Autumnal crumble pairing."],["Vanilla","Mellows the wine-like depth."],["Almond","Nutty bakewell base."]],i:[["Sage","Earthy-savoury herb against jammy fruit."],["Bay leaf","Subtle eucalyptus depth in compotes."],["Star anise","Licorice warmth amplifies the dark berry."]],b:[["Red wine","Shared anthocyanins and tannin; a reduction glaze."],["Juniper","Gin-botanical pine note."],["Black pepper","Sharpens the brambly edge."]]},
+
+  // CITRUS
+  {n:"Lemon",f:"Citrus",c:[["Vanilla","Bright vs round — a balanced pound cake."],["Blueberry","Classic muffin contrast."],["Poppy seed","Nutty crunch, the lemon-drizzle standard."]],i:[["Thyme","Citronellal in thyme echoes lemon's terpenes."],["Olive oil","Grassy fat for a moist, savoury cake."],["Lavender","Shared linalool; floral-citrus harmony."]],b:[["Black pepper","Lifts and lengthens the citrus finish."],["Basil","Herbaceous lemon sorbet territory."],["Saffron","Earthy-honeyed depth against the zest."]]},
+  {n:"Orange",f:"Citrus",c:[["Chocolate","Limonene + cocoa is a holiday classic."],["Cinnamon","Warm spice, mulled-orange comfort."],["Almond","Mediterranean orange-almond cake."]],i:[["Cardamom","Middle-Eastern pairing; shared terpene brightness."],["Fennel","Anise-citrus lift in biscotti."],["Rosemary","Pine-resin against sweet citrus."]],b:[["Olive oil","Grassy, savoury orange loaf."],["Black olive","Salt-bitter foil in a chocolate-orange cake."],["Saffron","Luxe honeyed depth."]]},
+  {n:"Lime",f:"Citrus",c:[["Coconut","Tropical key-lime axis."],["Vanilla","Smooths the sharp acidity."],["Ginger","Zingy double-brightness."]],i:[["Basil","Green-citrus sorbet."],["Mint","Cooling, mojito-leaning."],["Chili","Heat against acid; a spicy lime bar."]],b:[["Avocado","Creamy fat carries the zest in a mousse."],["Black pepper","Sharpens the finish."],["Tequila/agave","Smoky-sweet margarita cake."]]},
+  {n:"Yuzu",f:"Citrus",c:[["White chocolate","Creamy sweetness tames the tartness."],["Honey","Floral sweetener that matches yuzu's complexity."],["Ginger","Shared bright zing."]],i:[["Matcha","Grassy-bitter against floral citrus."],["Sesame","Nutty depth in a Japanese-style cake."],["Yogurt","Tang on tang, balanced by fat."]],b:[["Shiso","Herbal, minty-anise cousin aromatics."],["Sake kasu","Fermented umami depth."],["Black sesame","Toasty, dramatic contrast."]]},
+
+  // ORCHARD
+  {n:"Apple",f:"Orchard",c:[["Cinnamon","The definitive autumn pairing."],["Caramel","Maillard sweetness loves apple's acidity."],["Oats","Crumble texture and toasty grain."]],i:[["Cheddar","Savoury-fat tradition with apple pie."],["Fennel","Anise lift in a tart."],["Sage","Earthy herb against sweet fruit."]],b:[["Miso","Salt-umami caramel apple."],["Rosemary","Pine note in a galette."],["Cider vinegar","Acetic brightness deepens apple flavour."]]},
+  {n:"Pear",f:"Orchard",c:[["Vanilla","Poached-pear classic."],["Chocolate","Pear belle Hélène."],["Almond","Frangipane tart base."]],i:[["Cardamom","Aromatic spice lift."],["Blue cheese","Salt-funk against honeyed pear."],["Ginger","Warming brightness."]],b:[["Black pepper","Sharpens the delicate fruit."],["Rosemary","Resinous herb in a cake."],["Gorgonzola + walnut","Savoury dessert territory."]]},
+  {n:"Cherry",f:"Orchard",c:[["Dark chocolate","Black Forest canon; shared benzaldehyde with almond."],["Almond","Amaretto-cherry harmony (same aroma compound)."],["Vanilla","Rounds the tart-sweet fruit."]],i:[["Pistachio","Nutty-green contrast, beautiful colour."],["Hibiscus","Tart floral amplifier."],["Coffee","Roasted depth against bright fruit."]],b:[["Balsamic","Acetic intensity for a glaze."],["Black pepper","Heat sharpens the cherry."],["Thyme","Herbal-savoury foil."]]},
+
+  // TROPICAL
+  {n:"Coconut",f:"Tropical",c:[["Lime","Tropical brightness."],["Chocolate","Bounty-style richness."],["Pineapple","Piña colada pairing."]],i:[["Cardamom","Aromatic warmth in a rice pudding."],["Lemongrass","Citral lift, Thai-leaning."],["Coffee","Toasty against creamy."]],b:[["Curry/turmeric","Earthy spice in a savoury-sweet cake."],["Black sesame","Nutty drama."],["Kaffir lime leaf","Intense floral-citrus."]]},
+  {n:"Mango",f:"Tropical",c:[["Lime","Acid lifts the sweet pulp."],["Coconut","Tropical comfort."],["Vanilla","Creamy rounding."]],i:[["Chili","Sweet-heat (Tajín culture)."],["Cardamom","Indian mango-lassi pairing."],["Passion fruit","Compounding tropical esters."]],b:[["Black pepper","Sharpens the perfume."],["Saffron","Aamras with saffron tradition."],["Fish sauce/salt","Umami in a savoury sticky-rice dessert."]]},
+  {n:"Passion fruit",f:"Tropical",c:[["White chocolate","Tart vs sweet-creamy balance."],["Mango","Compounding tropical aromatics."],["Coconut","Smooths the intense acidity."]],i:[["Chocolate (dark)","Acid cuts richness, like raspberry does."],["Basil","Green-floral lift."],["Ginger","Double-zing."]],b:[["Black pepper","Lengthens the tart finish."],["Tarragon","Anise herb against tropical tang."],["Smoked salt","Phenolic edge on a curd."]]},
+  {n:"Banana",f:"Tropical",c:[["Caramel","Banoffee axis; Maillard sweetness."],["Chocolate","Classic loaf pairing."],["Walnut","Banana-bread crunch."]],i:[["Cardamom","Aromatic lift, removes flatness."],["Brown butter","Nutty depth (shared isoamyl/buttery notes)."],["Coffee","Roasted contrast."]],b:[["Miso","Salt-umami caramelised banana."],["Bacon","Smoky-savoury (Elvis territory)."],["Curry leaf","Aromatic-savoury fritter."]]},
+
+  // FLORAL
+  {n:"Rose",f:"Floral",c:[["Raspberry","Shared floral ketones (Ispahan)."],["Pistachio","Persian-pairing; nutty-green balance."],["Cardamom","Middle-Eastern aromatic harmony."]],i:[["Lychee","Overlapping perfume esters."],["Almond","Marzipan-floral elegance."],["White chocolate","Creamy carrier for delicate florals."]],b:[["Beetroot","Earthy-rosy depth."],["Saffron","Luxe floral-honey layering."],["Black pepper","Sharpens the perfume."]]},
+  {n:"Lavender",f:"Floral",c:[["Honey","Bee-friendly floral harmony."],["Lemon","Shared linalool brightness."],["Blueberry","Floral-terpene match."]],i:[["White chocolate","Creamy floral carrier."],["Earl Grey","Bergamot floral stacking."],["Vanilla","Soothing rounded base."]],b:[["Goat cheese","Tangy savoury foil."],["Rosemary","Both herbaceous-terpene; intense."],["Dark chocolate","Bitter depth against perfume."]]},
+  {n:"Elderflower",f:"Floral",c:[["Lemon","St-Germain spritz logic."],["Gooseberry","Classic English pairing."],["Strawberry","Floral lift on summer fruit."]],i:[["Lychee","Muscat-grape floral overlap."],["Cucumber","Cool, green, gin-leaning."],["Pear","Delicate honeyed harmony."]],b:[["Gin/juniper","Botanical stacking."],["Champagne","Wine-floral celebration cake."],["White pepper","Subtle heat lift."]]},
+
+  // HERB & GREEN
+  {n:"Mint",f:"Herb & Green",c:[["Chocolate","After-dinner classic; cooling vs rich."],["Lemon","Bright herbal lift."],["Pea","Fresh green pairing in savoury bakes."]],i:[["Strawberry","Cooling foil for sweet berry."],["Lime","Mojito-leaning."],["Coffee","Refreshing against roast."]],b:[["Tahini","Nutty-herbal halva territory."],["Feta","Salt-herb savoury scone."],["Watermelon","Cooling double-fresh."]]},
+  {n:"Basil",f:"Herb & Green",c:[["Strawberry","Green-anise lift on berry."],["Lemon","Herbal citrus harmony."],["Tomato","Savoury baking, focaccia."]],i:[["Peach","Stone-fruit floral match."],["Raspberry","Peppery-green foil."],["White chocolate","Creamy carrier for the herb."]],b:[["Chocolate","Herbal against cocoa bitterness."],["Pineapple","Tropical-green surprise."],["Olive oil + sea salt","Savoury-sweet cake."]]},
+  {n:"Rosemary",f:"Herb & Green",c:[["Lemon","Mediterranean cake classic."],["Olive oil","Savoury loaf tradition."],["Honey","Resinous-floral harmony."]],i:[["Orange","Pine vs sweet citrus."],["Apricot","Stone fruit with herbal lift."],["Dark chocolate","Bitter-resin depth."]],b:[["Grapefruit","Bitter-pine double act."],["Caramel","Herbal salted-caramel."],["Plum","Resin against deep fruit."]]},
+
+  // SPICE
+  {n:"Cardamom",f:"Spice",c:[["Coffee","Scandinavian/Arabic tradition."],["Orange","Shared terpene brightness."],["Pistachio","Aromatic-nutty harmony."]],i:[["Rose","Floral-aromatic layering."],["Chocolate","Eucalyptus lift on cocoa."],["Banana","Aromatic rescue for flat fruit."]],b:[["Coffee + saffron","Triple-aromatic showstopper."],["Black pepper","Compounding spice heat."],["Carrot","Earthy-sweet in a spiced cake."]]},
+  {n:"Cinnamon",f:"Spice",c:[["Apple","The autumnal default."],["Vanilla","Warm rounded base."],["Walnut","Toasty-spiced harmony."]],i:[["Orange","Mulled brightness."],["Coffee","Maillard-spice depth."],["Chili","Mexican hot-chocolate axis."]],b:[["Tomato","Savoury-sweet (Greek/Middle-Eastern)."],["Black pepper","Heat-stacking."],["Red wine","Mulled depth in a cake."]]},
+  {n:"Ginger",f:"Spice",c:[["Lemon","Bright double-zing."],["Honey","Soothing, warm sweetness."],["Molasses","Gingerbread foundation."]],i:[["Dark chocolate","Heat against bitterness."],["Rhubarb","Sharp-warm spring pairing."],["Pear","Delicate fruit with spice lift."]],b:[["Miso","Umami-spice glaze."],["Carrot","Earthy-sweet cake."],["Beetroot","Earthy-warm depth."]]},
+  {n:"Chai/Mixed spice",f:"Spice",c:[["Vanilla","Creamy rounding of the blend."],["Apple","Spiced orchard harmony."],["Honey","Floral sweetener."]],i:[["Pear","Delicate fruit with warm spice."],["Pumpkin","Autumnal squash classic."],["Orange","Citrus lift on the blend."]],b:[["Sweet potato","Earthy-sweet pie."],["Black tea","Compounding tannin-spice."],["Fig","Jammy depth against spice."]]},
+
+  // ROASTED & NUTTY
+  {n:"Almond",f:"Roasted & Nutty",c:[["Cherry","Shared benzaldehyde — a perfect compound match."],["Raspberry","Bakewell tradition."],["Apricot","Stone-fruit-kernel kinship."]],i:[["Orange","Mediterranean cake harmony."],["Rose","Marzipan-floral elegance."],["Coffee","Roasted-nutty depth."]],b:[["Fennel","Anise-nut biscotti."],["Olive oil","Grassy-savoury cake."],["Saffron","Luxe Persian pairing."]]},
+  {n:"Pistachio",f:"Roasted & Nutty",c:[["Rose","Persian classic."],["Cherry","Colour + flavour contrast."],["Chocolate","Nutty-rich harmony."]],i:[["Cardamom","Aromatic-nutty layering."],["Raspberry","Tart-green-nut balance."],["Orange blossom","Floral-Middle-Eastern lift."]],b:[["Saffron","Luxe golden-green pairing."],["White chocolate + matcha","Green-on-green drama."],["Lemon","Bright foil for richness."]]},
+  {n:"Hazelnut",f:"Roasted & Nutty",c:[["Chocolate","Gianduja/Nutella canon."],["Coffee","Roasted-nutty depth."],["Vanilla","Warm rounding."]],i:[["Pear","Delicate fruit against rich nut."],["Banana","Toasty-sweet loaf."],["Fig","Jammy-nut harmony."]],b:[["Brown butter","Compounding toasted notes."],["Blackberry","Bramble against praline."],["Whisky","Oak-vanilla-nut depth."]]},
+  {n:"Brown Butter",f:"Roasted & Nutty",c:[["Vanilla","Round, nutty caramel base."],["Sage","Classic savoury-sweet pairing."],["Pecan","Toasty-nutty stacking."]],i:[["Maple","Caramel-on-caramel depth."],["Banana","Shared buttery-nutty notes."],["Coffee","Roasted harmony."]],b:[["Miso","Umami salted-caramel territory."],["Black pepper","Sharpens the nutty fat."],["Lemon","Bright cut through richness."]]},
+  {n:"Sesame/Tahini",f:"Roasted & Nutty",c:[["Honey","Halva tradition."],["Chocolate","Nutty-bitter harmony."],["Date","Caramel-sweet Middle-Eastern pairing."]],i:[["Lemon","Bright foil for the paste."],["Matcha","Green-bitter against nutty."],["Banana","Toasty-sweet loaf."]],b:[["Miso","Umami-nut depth."],["Black sesame + yuzu","Dramatic toasty-citrus."],["Coffee","Roasted layering."]]},
+
+  // DAIRY & RICH
+  {n:"Vanilla",f:"Dairy & Rich",c:[["Almost everything","The universal rounder — softens acidity, deepens sweetness."],["Chocolate","Warm base for cocoa."],["Berry","Creamy foil for tart fruit."]],i:[["Cardamom","Aromatic lift on the custard base."],["Coffee","Vanilla tames coffee's bitterness."],["Olive oil","Grassy-savoury cake."]],b:[["Smoked salt","Phenolic edge on a custard."],["Black pepper","Subtle heat in a panna cotta."],["Miso","Umami salted-vanilla caramel."]]},
+  {n:"Caramel",f:"Dairy & Rich",c:[["Sea salt","The salted-caramel default."],["Apple","Maillard vs fruit acid."],["Chocolate","Rich-on-rich harmony."]],i:[["Coffee","Roasted-caramel depth."],["Banana","Banoffee axis."],["Whisky","Oak-vanilla-caramel."]],b:[["Miso","Umami deepens the caramel."],["Rosemary","Herbal-resin salted caramel."],["Fish sauce","Funky-salt Vietnamese-style."]]},
+  {n:"Cream Cheese",f:"Dairy & Rich",c:[["Carrot","The frosting canon."],["Lemon","Tang-on-tang, balanced cheesecake."],["Red velvet/cocoa","Mild-tangy classic."]],i:[["Fig","Jammy-savoury harmony."],["Passion fruit","Tart-tropical foil."],["Pumpkin","Spiced autumnal pairing."]],b:[["Miso","Umami-tang depth."],["Olive oil","Savoury cheesecake base."],["Black pepper","Subtle heat lift."]]},
+  {n:"Honey",f:"Dairy & Rich",c:[["Lavender","Floral bee-pairing."],["Almond","Nougat-leaning harmony."],["Lemon","Bright vs floral-sweet."]],i:[["Rosemary","Resinous-floral lift."],["Goat cheese","Salt-tang against floral sweet."],["Walnut","Baklava territory."]],b:[["Blue cheese","Funk-sweet drizzle."],["Black pepper","Heat in a honey cake."],["Saffron","Luxe golden layering."]]},
+
+  // CHOCOLATE & COFFEE
+  {n:"Dark Chocolate",f:"Chocolate & Coffee",c:[["Raspberry","Acid cuts richness — canonical."],["Orange","Limonene-cocoa harmony."],["Coffee","Mocha; shared roasted pyrazines."]],i:[["Chili","Mexican heat-cocoa axis."],["Cardamom","Eucalyptus lift on bitterness."],["Olive oil","Grassy-savoury truffle."]],b:[["Miso","Umami deepens the cocoa."],["Blue cheese","Funk-bitter pairing."],["Black garlic","Sweet-savoury depth."]]},
+  {n:"White Chocolate",f:"Chocolate & Coffee",c:[["Raspberry","Tart cuts the sweet-creamy."],["Vanilla","Compounding creaminess."],["Passion fruit","Bright tropical foil."]],i:[["Matcha","Bitter-green against sweet."],["Lavender","Floral carrier."],["Cardamom","Aromatic lift."]],b:[["Wasabi","Sharp heat in a ganache."],["Olive oil","Grassy savoury bonbon."],["Yuzu + black sesame","Dramatic Japanese pairing."]]},
+  {n:"Coffee",f:"Chocolate & Coffee",c:[["Chocolate","Mocha; shared roasted compounds."],["Cardamom","Arabic-coffee tradition."],["Caramel","Roasted-caramel depth."]],i:[["Orange","Bright citrus against roast."],["Hazelnut","Roasted-nutty harmony."],["Cherry","Fruit-against-roast contrast."]],b:[["Tonka/vanilla","Coumarin depth."],["Banana","Roasted-sweet loaf."],["Black pepper","Lengthens the roasted finish."]]},
+  {n:"Matcha",f:"Chocolate & Coffee",c:[["White chocolate","Sweet-creamy tames bitterness."],["Red bean","Japanese wagashi classic."],["Vanilla","Soothing rounded base."]],i:[["Yuzu","Citrus lift on grassy-bitter."],["Coconut","Tropical-creamy foil."],["Strawberry","Tart-sweet against green."]],b:[["Black sesame","Toasty-green drama."],["Lemon","Bright bitter-citrus."],["Sweetcorn","Buttery-green surprise."]]}
+];
+
+/* ---------- SAVOURY / FOOD DATASET ---------- */
+const FOOD_FAMILIES = [
+  {name:"Allium",        hue:"#b6a24e"},
+  {name:"Garden Veg",    hue:"#7f9a44"},
+  {name:"Earthy & Root", hue:"#a8762f"},
+  {name:"Fungi & Umami", hue:"#8a6b4a"},
+  {name:"Red Meat",      hue:"#a14338"},
+  {name:"Poultry & Pork",hue:"#c98b54"},
+  {name:"Seafood",       hue:"#5f8aa0"},
+  {name:"Legume & Grain",hue:"#b59353"},
+  {name:"Cheese & Dairy",hue:"#cda85e"},
+  {name:"Herb & Aromatic",hue:"#6f9456"},
+  {name:"Chili & Pepper",hue:"#bf5a36"},
+  {name:"Acid & Ferment",hue:"#9a9b4c"}
+];
+
+const FOOD_FLAVOURS = [
+  // ALLIUM
+  {n:"Garlic",f:"Allium",c:[["Olive oil","The Mediterranean base; fat carries the allicin."],["Tomato","Soffritto/sugo foundation."],["Butter","Garlic butter — the universal flavour bomb."]],i:[["Ginger","East-Asian aromatic base; sharp + pungent."],["Anchovy","Melts into a savoury umami paste (bagna càuda)."],["Black bean","Fermented depth in Chinese stir-fries."]],b:[["Honey","Sweet-roasted glaze on chicken or ribs."],["Coffee","Bitter depth in a steak rub or mole."],["Vanilla","Surprising in a beurre blanc for seafood."]]},
+  {n:"Onion",f:"Allium",c:[["Beef","Burgers, stews, the foundational pairing."],["Thyme","French onion soup canon."],["Butter","Slow-caramelised sweetness."]],i:[["Balsamic","Acetic lift for jammy caramelised onions."],["Sage","Earthy autumnal stuffing."],["Cumin","Warm-spiced base for curries."]],b:[["Cocoa","Mole/dark depth in braises."],["Maple","Sweet glaze on roasted onions."],["Sardine","Salt-umami on a tart."]]},
+  {n:"Shallot",f:"Allium",c:[["White wine","Classic French sauce base."],["Butter","Beurre blanc / mignonette."],["Tarragon","Béarnaise harmony."]],i:[["Fish sauce","Asian pickled-shallot brightness."],["Lime","Crunchy raw garnish on noodles."],["Mustard","Sharp vinaigrette base."]],b:[["Star anise","Aromatic braised depth."],["Brown sugar","Crispy fried-shallot sweetness."],["Orange","Zesty lift in a sauce."]]},
+  {n:"Leek",f:"Allium",c:[["Potato","Vichyssoise/soup classic."],["Butter","Gentle melting sweetness."],["Cream","Silky gratin base."]],i:[["Mustard","Sharp tang in a tart."],["Gruyère","Nutty-cheese gratin."],["Lemon","Bright braised finish."]],b:[["Miso","Umami-glazed grilled leeks."],["Hazelnut","Toasty-nut vinaigrette (a modern classic)."],["Vadouvan","French-curry aromatic."]]},
+
+  // GARDEN VEG
+  {n:"Tomato",f:"Garden Veg",c:[["Basil","Caprese; shared green-sweet aromatics."],["Garlic","The sugo foundation."],["Mozzarella","Milky foil for the acid."]],i:[["Anchovy","Umami-salt amplifies the sweetness (puttanesca)."],["Cumin","Warm-spiced shakshuka base."],["Soy sauce","Doubles the glutamate punch."]],b:[["Strawberry","Both sweet-acidic; a summer salad."],["Vanilla","Rounds a tomato jam."],["Cinnamon","Greek/Middle-Eastern braise warmth."]]},
+  {n:"Bell Pepper",f:"Garden Veg",c:[["Onion","Sofrito/fajita base."],["Olive oil","Roasted-pepper silkiness."],["Paprika","Compounding capsicum sweetness."]],i:[["Anchovy","Salt-umami on roasted peppers (escalivada)."],["Capers","Briny lift in a salad."],["Almond","Romesco harmony."]],b:[["Chocolate","Mole depth."],["Peanut","Satay-leaning sauce."],["Feta","Salt-tang stuffed peppers."]]},
+  {n:"Aubergine",f:"Garden Veg",c:[["Tomato","Parmigiana/ratatouille base."],["Garlic","Silky melting harmony."],["Olive oil","The sponge it craves."]],i:[["Miso","Nasu dengaku glaze — sweet-umami."],["Tahini","Baba ganoush creaminess."],["Pomegranate","Tart-sweet Middle-Eastern lift."]],b:[["Chocolate","Caponata-style sweet-savoury depth."],["Coffee","Bitter-roasted braise."],["Buttermilk","Tangy charred-aubergine sauce (Ottolenghi)."]]},
+  {n:"Courgette",f:"Garden Veg",c:[["Mint","Fresh summer-grilled pairing."],["Lemon","Bright ribboned-salad lift."],["Parmesan","Salt-umami fritters."]],i:[["Anchovy","Melted savoury-salt depth."],["Ricotta","Creamy stuffed-flower harmony."],["Chili","Warm-fried-courgette kick."]],b:[["Chocolate","Surprisingly moist in a savoury-sweet loaf."],["Saffron","Golden braised elegance."],["Dill","Cool herbal Eastern-European pairing."]]},
+
+  // EARTHY & ROOT
+  {n:"Carrot",f:"Earthy & Root",c:[["Cumin","Warm-spiced roasted classic."],["Ginger","Bright soup pairing."],["Butter","Glazed sweetness."]],i:[["Harissa","Spiced-charred depth."],["Orange","Citrus lift on the sweetness."],["Tarragon","Anise-herb elegance."]],b:[["Coffee","Bitter-roasted glaze."],["Miso","Umami-roasted depth."],["Cardamom","Aromatic Indian-spiced lift."]]},
+  {n:"Beetroot",f:"Earthy & Root",c:[["Goat cheese","Tang-creamy against earthy-sweet."],["Walnut","Toasty-earthy salad classic."],["Dill","Cool herbal Eastern lift."]],i:[["Orange","Citrus brightens the earth."],["Horseradish","Sharp heat foil."],["Cumin","Warm-spiced roast."]],b:[["Chocolate","Earthy depth in a savoury sauce."],["Coffee","Bitter-earthy harmony."],["Smoked mackerel","Salt-smoke against sweet root."]]},
+  {n:"Potato",f:"Earthy & Root",c:[["Butter","The eternal pairing."],["Rosemary","Roasted-resin classic."],["Cheese","Gratin/comfort base."]],i:[["Truffle","Earthy-luxe harmony."],["Smoked paprika","Patatas bravas warmth."],["Curry","Aloo/bombay depth."]],b:[["Vanilla","Surprising in a luxe purée."],["Seaweed","Umami-mineral crisp."],["Coffee","Bitter-roasted novelty rub."]]},
+  {n:"Mushroom",f:"Earthy & Root",c:[["Thyme","Earthy-herb sauté classic."],["Garlic","Butter-garlic harmony."],["Cream","Silky stroganoff/sauce."]],i:[["Soy sauce","Doubles the umami."],["Marsala","Sweet-wine braise."],["Tarragon","Anise-herb lift."]],b:[["Coffee","Bitter-earthy depth in a ragù."],["Miso","Umami-stacking glaze."],["Dark chocolate","Mole-style savoury depth."]]},
+
+  // FUNGI & UMAMI
+  {n:"Porcini",f:"Fungi & Umami",c:[["Butter","Risotto richness."],["Parmesan","Umami-on-umami harmony."],["Garlic","Earthy aromatic base."]],i:[["Truffle","Compounding forest-floor depth."],["Marsala","Sweet-wine reduction."],["Sage","Earthy-herb pasta."]],b:[["Cocoa","Dark savoury braise."],["Coffee","Bitter-roasted depth."],["Hazelnut","Toasty-earthy pairing."]]},
+  {n:"Miso",f:"Fungi & Umami",c:[["Ginger","Glaze and dressing base."],["Sesame","Nutty-umami harmony."],["Scallion","Bright allium lift."]],i:[["Butter","Umami-rich pasta/sauce (modern classic)."],["Maple","Sweet-savoury glaze."],["Aubergine","Dengaku tradition."]],b:[["Caramel","Umami salted-caramel."],["Banana","Umami-sweet in baking."],["Chocolate","Deepens cocoa savoury notes."]]},
+  {n:"Soy Sauce",f:"Fungi & Umami",c:[["Ginger","Marinade base."],["Garlic","Stir-fry foundation."],["Sesame oil","Nutty-savoury harmony."]],i:[["Citrus","Ponzu brightness."],["Honey","Sweet-glaze teriyaki."],["Butter","Umami-rich finishing sauce."]],b:[["Vanilla","Rounds a savoury caramel."],["Coffee","Bitter-umami marinade."],["Pineapple","Sweet-tropical glaze."]]},
+  {n:"Anchovy",f:"Fungi & Umami",c:[["Garlic","Bagna càuda / dressing base."],["Lemon","Bright salt-cut."],["Parsley","Fresh-herb foil."]],i:[["Butter","Melted umami sauce on steak/veg."],["Tomato","Puttanesca depth."],["Chili","Spaghetti aglio harmony."]],b:[["Caramel","Salt-sweet glaze."],["Chocolate","Hidden depth in a sauce."],["Egg","Caesar/umami emulsion."]]},
+
+  // RED MEAT
+  {n:"Beef",f:"Red Meat",c:[["Black pepper","Steak-au-poivre canon."],["Onion","Stew/burger foundation."],["Red wine","Braise/reduction classic."]],i:[["Coffee","Bitter-roasted rub depth."],["Fish sauce","Umami-boost in a marinade."],["Blue cheese","Funk-rich steak topper."]],b:[["Cocoa","Mole/chili depth."],["Anchovy","Hidden umami in a ragù."],["Coffee + chili","Smoky-bitter brisket rub."]]},
+  {n:"Lamb",f:"Red Meat",c:[["Rosemary","The roast-lamb default."],["Mint","Cuts the fat (sauce tradition)."],["Garlic","Studded-roast classic."]],i:[["Cumin","Middle-Eastern/Xinjiang spice."],["Pomegranate","Tart-sweet glaze."],["Anchovy","Hidden salt-umami depth."]],b:[["Coffee","Bitter-roasted rub."],["Apricot","Sweet tagine pairing."],["Dark chocolate","Rich braise depth."]]},
+  {n:"Venison",f:"Red Meat",c:[["Juniper","Gamey-pine classic."],["Red wine","Rich braise."],["Blackberry","Bramble-fruit sauce."]],i:[["Chocolate","Dark sauce depth."],["Beetroot","Earthy harmony."],["Coffee","Bitter-roasted rub."]],b:[["Cherry","Sweet-tart sauce."],["Star anise","Aromatic braise."],["Espresso + cocoa","Deep gamey glaze."]]},
+
+  // POULTRY & PORK
+  {n:"Chicken",f:"Poultry & Pork",c:[["Lemon","Bright roast classic."],["Thyme","Herby roast base."],["Garlic","40-clove tradition."]],i:[["Tarragon","Cream-sauce elegance."],["Harissa","Spiced-charred depth."],["Saffron","Golden paella/tagine."]],b:[["Cola","Sweet braise (Vietnamese-leaning)."],["Coffee","Bitter rub."],["Peanut","Satay sauce."]]},
+  {n:"Pork",f:"Poultry & Pork",c:[["Apple","Sauce/roast classic; fat vs acid."],["Sage","Sausage/stuffing canon."],["Fennel","Porchetta tradition."]],i:[["Star anise","Asian braise (char siu/adobo)."],["Mustard","Sharp glaze."],["Maple","Sweet-cured harmony."]],b:[["Coffee","Bitter-roasted rub."],["Clam","Surf-and-turf (Portuguese)."],["Rhubarb","Tart-fruit foil."]]},
+  {n:"Duck",f:"Poultry & Pork",c:[["Orange","À l'orange classic."],["Cherry","Sweet-tart sauce."],["Thyme","Herby confit base."]],i:[["Star anise","Aromatic braise."],["Plum","Chinese-pancake sauce."],["Honey","Glazed-roast harmony."]],b:[["Coffee","Bitter-rubbed breast."],["Pomegranate","Tart-sweet glaze."],["Beetroot","Earthy plating partner."]]},
+  {n:"Bacon",f:"Poultry & Pork",c:[["Egg","Breakfast canon."],["Maple","Sweet-smoke American classic."],["Cheese","Salt-fat harmony."]],i:[["Date","Devils-on-horseback sweetness."],["Scallop","Surf-and-turf umami."],["Apple","Smoky-sweet salad."]],b:[["Chocolate","Salt-smoke against cocoa."],["Peanut butter","Sweet-savoury indulgence."],["Banana","Elvis-sandwich territory."]]},
+
+  // SEAFOOD
+  {n:"Salmon",f:"Seafood",c:[["Dill","The Nordic default."],["Lemon","Bright acid-cut."],["Butter","Silky-rich harmony."]],i:[["Miso","Umami-glaze (yuan-yaki)."],["Soy + honey","Teriyaki balance."],["Horseradish","Sharp creamy foil."]],b:[["Coffee","Bitter-cured rub."],["Maple","Sweet-glazed cedar plank."],["Pomegranate","Tart-sweet garnish."]]},
+  {n:"Shrimp",f:"Seafood",c:[["Garlic","Scampi/gambas base."],["Lemon","Bright zest classic."],["Butter","Rich sauté harmony."]],i:[["Chili","Spicy-sweet stir-fry."],["Lemongrass","Thai aromatic broth."],["Tomato","Diavola/creole base."]],b:[["Vanilla","Beurre-blanc surprise."],["Coconut","Tropical curry."],["Watermelon","Sweet-savoury salad."]]},
+  {n:"Tuna",f:"Seafood",c:[["Soy sauce","Sashimi/poke base."],["Sesame","Seared-crust harmony."],["Lime","Bright ceviche acid."]],i:[["Avocado","Creamy poke pairing."],["Ginger","Sharp aromatic lift."],["Olive","Niçoise tradition."]],b:[["Chocolate","Sicilian sweet-savoury sauce."],["Strawberry","Sweet-acid tartare."],["Coffee","Bitter-crusted sear."]]},
+  {n:"Scallop",f:"Seafood",c:[["Butter","Seared-rich harmony."],["Bacon","Salt-smoke wrap."],["Lemon","Bright acid-cut."]],i:[["Cauliflower","Sweet-nutty purée."],["Black pudding","Earthy-rich British pairing."],["Pea","Sweet-spring purée."]],b:[["Vanilla","Beurre-blanc elegance."],["Mango","Tropical-sweet salsa."],["Coffee","Bitter-dust garnish."]]},
+
+  // LEGUME & GRAIN
+  {n:"Chickpea",f:"Legume & Grain",c:[["Tahini","Hummus canon."],["Cumin","Warm-spiced base."],["Lemon","Bright falafel lift."]],i:[["Harissa","Spiced-stew depth."],["Yogurt","Cool-creamy foil."],["Spinach","Earthy curry pairing."]],b:[["Chocolate","Blondie-batter surprise."],["Coffee","Bitter-roasted snack."],["Saffron","Golden tagine."]]},
+  {n:"Lentil",f:"Legume & Grain",c:[["Cumin","Dal foundation."],["Onion","Earthy stew base."],["Bacon","Smoky French-braise."]],i:[["Coconut","Creamy dal harmony."],["Lemon","Bright finishing lift."],["Mint","Fresh herbal foil."]],b:[["Chocolate","Hidden depth in a savoury stew."],["Pomegranate","Tart-sweet salad jewel."],["Coffee","Bitter-roasted note."]]},
+  {n:"Rice",f:"Legume & Grain",c:[["Saffron","Paella/biryani gold."],["Butter","Risotto richness."],["Soy sauce","Fried-rice base."]],i:[["Coconut","Sweet-savoury Thai/nasi lemak."],["Lime","Bright zest fluff."],["Cardamom","Aromatic pilaf."]],b:[["Vanilla","Sweet-savoury crossover pudding."],["Squid ink","Dramatic black risotto."],["Coffee","Bitter novelty rice."]]},
+
+  // CHEESE & DAIRY
+  {n:"Parmesan",f:"Cheese & Dairy",c:[["Tomato","Umami-acid harmony."],["Basil","Pesto base."],["Pasta","The eternal finish."]],i:[["Balsamic","Aged-sweet drizzle."],["Pear","Sweet-salt fruit board."],["Truffle","Earthy-luxe stacking."]],b:[["Honey","Sweet-salt drizzle."],["Dark chocolate","Surprising umami-bitter board."],["Espresso","Bitter-salt novelty."]]},
+  {n:"Feta",f:"Cheese & Dairy",c:[["Watermelon","Salt-sweet summer classic."],["Olive","Greek-salad base."],["Mint","Fresh herbal harmony."]],i:[["Honey","Sweet-salt drizzle (baked feta)."],["Beetroot","Earthy-tang pairing."],["Dill","Cool herbal lift."]],b:[["Strawberry","Sweet-salt salad."],["Chili honey","Sweet-heat baked feta."],["Lavender","Floral-savoury surprise."]]},
+  {n:"Blue Cheese",f:"Cheese & Dairy",c:[["Pear","Sweet-funk board classic."],["Walnut","Toasty-funk harmony."],["Honey","Sweet drizzle foil."]],i:[["Fig","Jammy-funk pairing."],["Steak","Rich-funk topper."],["Port","Sweet-wine tradition."]],b:[["Dark chocolate","Funk-bitter depth."],["Apricot","Sweet-tart foil."],["Coffee","Bitter-funk novelty."]]},
+  {n:"Goat Cheese",f:"Cheese & Dairy",c:[["Beetroot","Tang-earthy classic."],["Honey","Sweet-tang drizzle."],["Thyme","Herby baked-round harmony."]],i:[["Fig","Jammy-tang pairing."],["Lavender","Floral-tang surprise (works)."],["Walnut","Toasty foil."]],b:[["Watermelon","Sweet-tang salad."],["Dark chocolate","Tangy-bitter board."],["Espresso","Bitter novelty pairing."]]},
+
+  // HERB & AROMATIC
+  {n:"Basil",f:"Herb & Aromatic",c:[["Tomato","Caprese/sugo canon."],["Garlic","Pesto base."],["Parmesan","Pesto richness."]],i:[["Lemon","Bright herbal lift."],["Chili","Thai-basil heat."],["Peach","Stone-fruit floral salad."]],b:[["Strawberry","Sweet-green dessert salad."],["Chocolate","Herbal-bitter surprise."],["Watermelon","Cooling summer pairing."]]},
+  {n:"Coriander",f:"Herb & Aromatic",c:[["Lime","Bright Mexican/Thai base."],["Chili","Salsa/curry heat."],["Cumin","Warm-spiced harmony."]],i:[["Coconut","Creamy curry lift."],["Ginger","Sharp aromatic base."],["Peanut","Satay-herb harmony."]],b:[["Orange","Citrus-herb gremolata."],["Yogurt","Cool chutney foil."],["Pineapple","Sweet-tropical salsa."]]},
+  {n:"Rosemary",f:"Herb & Aromatic",c:[["Lamb","Roast canon."],["Potato","Resin-roast classic."],["Garlic","Aromatic studding."]],i:[["Lemon","Bright Mediterranean lift."],["Olive","Focaccia harmony."],["Orange","Pine-citrus duo."]],b:[["Caramel","Herbal salted-caramel."],["Grapefruit","Bitter-pine cocktail/glaze."],["Chocolate","Resin-bitter depth."]]},
+  {n:"Thyme",f:"Herb & Aromatic",c:[["Chicken","Roast base."],["Mushroom","Earthy sauté harmony."],["Lemon","Bright braise lift."]],i:[["Honey","Sweet-resin glaze."],["Goat cheese","Herby tart pairing."],["Orange","Citrus-herb duo."]],b:[["Chocolate","Herbal-bitter ganache (savoury)."],["Apricot","Sweet-herb roast."],["Coffee","Bitter-resin rub."]]},
+
+  // CHILI & PEPPER
+  {n:"Chili",f:"Chili & Pepper",c:[["Lime","Heat-acid Mexican base."],["Garlic","Stir-fry/sambal foundation."],["Coriander","Fresh-herb foil."]],i:[["Chocolate","Mole/heat-cocoa axis."],["Mango","Sweet-heat (Tajín)."],["Peanut","Satay heat."]],b:[["Strawberry","Sweet-heat agua fresca."],["Pineapple","Tropical-heat salsa."],["Honey","Hot-honey glaze."]]},
+  {n:"Black Pepper",f:"Chili & Pepper",c:[["Beef","Au-poivre canon."],["Strawberry","Heat lifts the berry."],["Parmesan","Cacio e pepe base."]],i:[["Citrus","Sharpens the zest finish."],["Pineapple","Sweet-heat lift."],["Gin","Botanical cocktail edge."]],b:[["Chocolate","Heat-deepened ganache."],["Vanilla","Subtle panna-cotta lift."],["Watermelon","Sweet-heat salad."]]},
+  {n:"Smoked Paprika",f:"Chili & Pepper",c:[["Potato","Patatas bravas warmth."],["Chickpea","Spiced-stew depth."],["Garlic","Aioli/sofrito base."]],i:[["Chocolate","Smoky mole depth."],["Honey","Sweet-smoke glaze."],["Egg","Shakshuka harmony."]],b:[["Maple","Sweet-smoke bacon rub."],["Orange","Citrus-smoke marinade."],["Coffee","Bitter-smoke depth."]]},
+
+  // ACID & FERMENT
+  {n:"Lemon",f:"Acid & Ferment",c:[["Chicken","Bright roast classic."],["Garlic","Mediterranean base."],["Olive oil","Dressing foundation."]],i:[["Thyme","Citrus-herb harmony."],["Caper","Briny-acid lift (piccata)."],["Tahini","Creamy-tang dressing."]],b:[["Black pepper","Sharpened citrus finish."],["Sumac","Tart-on-tart Middle-Eastern."],["Vanilla","Rounds a savoury beurre blanc."]]},
+  {n:"Vinegar",f:"Acid & Ferment",c:[["Olive oil","Vinaigrette base."],["Honey","Sweet-sour balance."],["Mustard","Sharp emulsion."]],i:[["Strawberry","Balsamic-sweet lift."],["Soy sauce","Tang-umami glaze."],["Chili","Hot-sour dressing."]],b:[["Chocolate","Sweet-sour mole edge."],["Vanilla","Shrub/drinking-vinegar surprise."],["Watermelon","Quick-pickle salad."]]},
+  {n:"Yogurt",f:"Acid & Ferment",c:[["Cucumber","Tzatziki/raita base."],["Mint","Cool-herb harmony."],["Cumin","Spiced marinade foil."]],i:[["Harissa","Spiced-cool contrast."],["Lemon","Tang-on-tang dressing."],["Dill","Fresh-herb sauce."]],b:[["Saffron","Golden marinade."],["Rose","Floral Persian dessert."],["Chili honey","Sweet-heat drizzle bowl."]]},
+  {n:"Capers",f:"Acid & Ferment",c:[["Lemon","Briny-acid duo (piccata)."],["Anchovy","Salt-umami harmony."],["Parsley","Fresh-herb salsa verde."]],i:[["Smoked salmon","Classic bagel pairing."],["Brown butter","Nutty-briny sauce (meunière)."],["Tomato","Puttanesca depth."]],b:[["Raisin","Sweet-briny Sicilian pairing."],["Cauliflower","Briny-roasted harmony."],["Orange","Citrus-briny salad."]]}
+];
+
+/* ---------- DATASETS ---------- */
+const DATASETS = {
+  bake:{
+    families:BAKE_FAMILIES, flavours:BAKE_FLAVOURS,
+    kicker:"Aroma &amp; Tradition · For Bakers", titleWord:"Flavour",
+    sub:"Click any flavour to reveal what pairs with it — the classics, the clever, and the boldly unexpected. Grounded in shared aroma compounds and the kitchen canon.",
+    hub:"Flavour", startHint:"Try Raspberry, Brown&nbsp;Butter, or Cardamom.", unit:"flavours"
+  },
+  food:{
+    families:FOOD_FAMILIES, flavours:FOOD_FLAVOURS,
+    kicker:"Umami &amp; Tradition · For Cooks", titleWord:"Savoury",
+    sub:"Click any ingredient to reveal what pairs with it in the pan — the classics, the clever, and the boldly unexpected. Grounded in shared compounds and the kitchen canon.",
+    hub:"Ingredient", startHint:"Try Garlic, Mushroom, or Lamb.", unit:"ingredients"
+  }
+};
+let MODE='bake';
+
+/* ---------- BUILD WHEEL ---------- */
+const svg = document.getElementById('wheel');
+const SVGNS = "http://www.w3.org/2000/svg";
+const CX=300, CY=300, R_OUT=290, R_IN=120, R_FAM=300;
+const TWO_PI = Math.PI*2;
+
+function polar(cx,cy,r,a){return [cx+r*Math.cos(a), cy+r*Math.sin(a)];}
+function arcPath(cx,cy,rOut,rIn,a0,a1){
+  const [x0,y0]=polar(cx,cy,rOut,a0), [x1,y1]=polar(cx,cy,rOut,a1);
+  const [x2,y2]=polar(cx,cy,rIn,a1), [x3,y3]=polar(cx,cy,rIn,a0);
+  const large = (a1-a0)>Math.PI?1:0;
+  return `M${x0} ${y0} A${rOut} ${rOut} 0 ${large} 1 ${x1} ${y1} L${x2} ${y2} A${rIn} ${rIn} 0 ${large} 0 ${x3} ${y3} Z`;
+}
+function shade(hex,p){ // p positive lighten, negative darken
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.round(r+(p>0?(255-r):r)*p*(p>0?1:1));
+  g=Math.round(g+(p>0?(255-g):g)*p);
+  b=Math.round(b+(p>0?(255-b):b)*p);
+  r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));
+  return `rgb(${r},${g},${b})`;
+}
+
+// group flavours by family in wheel order
+let segEls = {};
+let currentDS = null;
+
+function buildWheel(ds){
+  currentDS = ds;
+  segEls = {};
+  // clear previous svg content
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const byFam = ds.families.map(f=>({...f, items:ds.flavours.filter(x=>x.f===f.name)}))
+                          .filter(f=>f.items.length>0);
+  const total = ds.flavours.length;
+  document.getElementById('count').textContent = total;
+
+  let angle = -Math.PI/2; // start at top
+
+  byFam.forEach(fam=>{
+    const span = (fam.items.length/total)*TWO_PI;
+    const famStart = angle;
+    fam.items.forEach((flav,idx)=>{
+      const a0=angle, a1=angle+span/fam.items.length;
+      const mid=(a0+a1)/2;
+      const path=document.createElementNS(SVGNS,'path');
+      path.setAttribute('d',arcPath(CX,CY,R_OUT,R_IN,a0,a1));
+      const tint = idx%2===0?0.0:-0.10;
+      path.setAttribute('fill',shade(fam.hue,tint));
+      path.setAttribute('stroke','#faf6ef');
+      path.setAttribute('stroke-width','1.5');
+      path.setAttribute('class','seg');
+      path.dataset.flav=flav.n;
+      svg.appendChild(path);
+      segEls[flav.n]=path;
+
+      // label
+      const rLab=(R_OUT+R_IN)/2;
+      let [lx,ly]=polar(CX,CY,rLab,mid);
+      let deg=mid*180/Math.PI;
+      let rot=deg;
+      if(deg>90&&deg<270) rot=deg+180;
+      const t=document.createElementNS(SVGNS,'text');
+      t.setAttribute('x',lx);t.setAttribute('y',ly);
+      t.setAttribute('class','seg-label');
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('dominant-baseline','middle');
+      t.setAttribute('transform',`rotate(${rot} ${lx} ${ly})`);
+      t.textContent=flav.n;
+      t.style.pointerEvents='none';
+      svg.appendChild(t);
+
+      path.addEventListener('click',()=>select(flav.n));
+      angle=a1;
+    });
+    // family label outside
+    const famMid=(famStart+angle)/2;
+    let [fx,fy]=polar(CX,CY,R_FAM+8,famMid);
+    let fdeg=famMid*180/Math.PI;
+    let frot=fdeg; if(fdeg>90&&fdeg<270) frot=fdeg+180;
+    const ft=document.createElementNS(SVGNS,'text');
+    ft.setAttribute('x',fx);ft.setAttribute('y',fy);
+    ft.setAttribute('class','fam-label');
+    ft.setAttribute('text-anchor','middle');
+    ft.setAttribute('dominant-baseline','middle');
+    ft.setAttribute('transform',`rotate(${frot} ${fx} ${fy})`);
+    ft.textContent=fam.name;
+    svg.appendChild(ft);
+  });
+
+  // hub
+  const hubCircle=document.createElementNS(SVGNS,'circle');
+  hubCircle.setAttribute('cx',CX);hubCircle.setAttribute('cy',CY);hubCircle.setAttribute('r',R_IN-6);
+  hubCircle.setAttribute('fill','#fffdf9');hubCircle.setAttribute('stroke','#e3d9c8');hubCircle.setAttribute('stroke-width','1.5');
+  svg.appendChild(hubCircle);
+  const hub1=document.createElementNS(SVGNS,'text');
+  hub1.setAttribute('x',CX);hub1.setAttribute('y',CY-6);hub1.setAttribute('class','hub hub-main');hub1.setAttribute('id','hubMain');
+  hub1.textContent=ds.hub;
+  svg.appendChild(hub1);
+  const hub2=document.createElementNS(SVGNS,'text');
+  hub2.setAttribute('x',CX);hub2.setAttribute('y',CY+16);hub2.setAttribute('class','hub hub-sub');hub2.setAttribute('id','hubSub');
+  hub2.textContent='click a slice';
+  svg.appendChild(hub2);
+}
+
+/* ---------- SELECT ---------- */
+function select(name){
+  const flav=currentDS.flavours.find(x=>x.n===name);
+  if(!flav)return;
+  Object.entries(segEls).forEach(([n,el])=>{
+    el.classList.toggle('active',n===name);
+    el.classList.toggle('dim',n!==name);
+  });
+  document.getElementById('hubMain').textContent=flav.n;
+  document.getElementById('hubSub').textContent=flav.f;
+  document.getElementById('famChip').textContent=flav.f;
+  document.getElementById('title').textContent=flav.n;
+  document.getElementById('note').textContent=`What works with ${flav.n.toLowerCase()} — from the expected to the experimental.`;
+
+  const groups=[
+    {key:'c',label:'Classic',color:'var(--classic)'},
+    {key:'i',label:'Interesting',color:'var(--interesting)'},
+    {key:'b',label:'Bold & Unexpected',color:'var(--bold)'}
+  ];
+  let html='';
+  groups.forEach(g=>{
+    html+=`<div class="grp"><div class="grp-title" style="color:${g.color}"><span class="dot" style="background:${g.color}"></span>${g.label}</div>`;
+    flav[g.key].forEach(p=>{
+      html+=`<div class="pair"><div class="name">${p[0]}</div><div class="why">${p[1]}</div></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('pairings').innerHTML=html;
+}
+
+/* ---------- RESET PANEL ---------- */
+function resetPanel(ds){
+  document.getElementById('famChip').textContent='Select a '+(ds===DATASETS.food?'ingredient':'flavour');
+  document.getElementById('title').textContent='Pick from the wheel';
+  document.getElementById('note').textContent=ds===DATASETS.food
+    ? 'Each segment is a cooking ingredient, grouped by family around the ring.'
+    : 'Each segment is a baking-friendly flavour, grouped by aroma family around the ring.';
+  document.getElementById('pairings').innerHTML=
+    `<div class="empty"><div class="big">Where to begin?</div><div>${ds.startHint}</div></div>`;
+}
+
+/* ---------- TAB SWITCH ---------- */
+function switchMode(mode){
+  if(mode===MODE) return;
+  MODE=mode;
+  const ds=DATASETS[mode];
+  document.getElementById('tab-bake').classList.toggle('active',mode==='bake');
+  document.getElementById('tab-food').classList.toggle('active',mode==='food');
+  document.getElementById('kicker').innerHTML=ds.kicker;
+  document.getElementById('titleWord').textContent=ds.titleWord;
+  document.getElementById('sub').textContent=ds.sub;
+  buildWheel(ds);
+  resetPanel(ds);
+}
+
+/* ---------- INIT ---------- */
+buildWheel(DATASETS.bake);
+
+</script>
+</body>
+</html>
